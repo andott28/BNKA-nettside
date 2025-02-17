@@ -1,17 +1,56 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { CreditCard, Home, HelpCircle, Phone, Menu, X, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { Facebook, Linkedin } from 'lucide-react';
+import LoginPage from './pages/LoginPage';
+import MyPage from './pages/MyPage';
+import RegisterPage from './pages/RegisterPage';
 
 // Pages
 import HomePage from './pages/HomePage';
 import ApplicationPage from './pages/ApplicationPage';
 import HowItWorksPage from './pages/HowItWorksPage';
 import ContactPage from './pages/ContactPage';
-import { Facebook, Linkedin } from 'lucide-react';
 
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  const handleLogin = (user) => {
+    setIsLoggedIn(true);
+    setCurrentUser(user);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+  };
+
+  const handleDeleteAccount = () => {
+    if (currentUser) {
+      setUsers(prevUsers => prevUsers.filter(user => user.email !== currentUser.email));
+      handleLogout();
+    }
+  };
+
+  const handleUpdateUser = (updatedUser) => {
+    setUsers(prevUsers => {
+      // Check if the new email is already in use by another user
+      const emailExists = prevUsers.some(user => user.email === updatedUser.email && user.email !== currentUser.email);
+      if (emailExists) {
+        alert('Denne e-postadressen er allerede i bruk.');
+        return prevUsers; // Do not update the users state
+      } else {
+        // Update the user in the users state
+        return prevUsers.map(user =>
+          user.email === updatedUser.email ? { ...updatedUser } : user
+        );
+      }
+    });
+    setCurrentUser(updatedUser);
+  };
 
   return (
     <Router>
@@ -41,12 +80,21 @@ function App() {
                 <Link to="/contact" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
                   Kontakt
                 </Link>
-                <Link
-                  to="/apply"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-                >
-                  Kom I Gang
-                </Link>
+                {isLoggedIn && currentUser ? (
+                  <Link
+                    to="/my-page"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                  >
+                    Min Side
+                  </Link>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                  >
+                    Logg Inn
+                  </Link>
+                )}
               </div>
 
               {/* Mobile menu button */}
@@ -89,6 +137,21 @@ function App() {
                 >
                   Kontakt
                 </Link>
+                {isLoggedIn && currentUser ? (
+                  <Link
+                    to="/my-page"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  >
+                    Min Side
+                  </Link>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  >
+                    Logg Inn
+                  </Link>
+                )}
               </div>
             </div>
           )}
@@ -101,6 +164,9 @@ function App() {
             <Route path="/apply" element={<ApplicationPage />} />
             <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/login" element={<LoginPage onLogin={handleLogin} users={users} setUsers={setUsers} />} />
+            <Route path="/register" element={<RegisterPage setUsers={setUsers} />} />
+            <Route path="/my-page" element={<MyPage onLogout={handleLogout} user={currentUser} onDeleteAccount={handleDeleteAccount} onUpdateUser={handleUpdateUser} />} />
           </Routes>
         </main>
 
@@ -159,11 +225,6 @@ function App() {
                     <a href="#" className="text-base text-gray-600 hover:text-gray-900">
                       Bruksvilkår
                     </a>
-                  </li>
-                  <li>
-                     <Link to="/faq" className="text-base text-gray-600 hover:text-gray-900">
-                      Ofte stilte spørsmål
-                    </Link>
                   </li>
                   <li>
                      <Link to="/contact" className="text-base text-gray-600 hover:text-gray-900">
