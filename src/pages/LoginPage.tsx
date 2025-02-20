@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+
+interface LoginPageProps {
+  onLogin: (user: any) => void;
+  users: any[];
+  setUsers: React.Dispatch<React.SetStateAction<any[]>>;
+}
 
 const LoginPage = ({ onLogin, users, setUsers }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Basic authentication logic (replace with a real implementation)
-    const user = users.find(u => u.email === email && u.password === password);
-    if (user) {
-      onLogin(user);
-      navigate('/my-page');
-    } else {
-      alert('Invalid credentials');
+  useEffect(() => {
+    const storedRedirectPath = localStorage.getItem('redirectPath');
+    if (storedRedirectPath) {
+      localStorage.removeItem('redirectPath');
     }
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 flex items-center justify-center">
@@ -26,49 +26,22 @@ const LoginPage = ({ onLogin, users, setUsers }) => {
             Logg Inn
           </h2>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <input type="hidden" name="remember" value="true" />
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                E-post
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="E-post"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Passord
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Passord"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
-
+        <div className="mt-8 space-y-6">
           <div>
-            <button
-              type="submit"
+            <Link
+              to="/bankid-login"
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              Logg Inn
+              Logg Inn med BankID
+            </Link>
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={() => alert('Logg inn uten BankID er ikke implementert ennå.')}
+              className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              Logg Inn uten BankID
             </button>
           </div>
           <div className="text-sm text-center">
@@ -76,7 +49,7 @@ const LoginPage = ({ onLogin, users, setUsers }) => {
               Opprett Bruker
             </Link>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

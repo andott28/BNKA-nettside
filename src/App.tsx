@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { CreditCard, Home, HelpCircle, Phone, Menu, X, ChevronRight } from 'lucide-react';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  Navigate,
+  useLocation,
+} from 'react-router-dom';
+import { CreditCard, Menu, X } from 'lucide-react';
 import { Facebook, Linkedin } from 'lucide-react';
 import LoginPage from './pages/LoginPage';
 import MyPage from './pages/MyPage';
 import RegisterPage from './pages/RegisterPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
+import BankIDLoginPage from './pages/BankIDLoginPage';
+import BankIDPrivacyPolicyPage from './pages/BankIDPrivacyPolicyPage';
+import BankIDAuthPage from './pages/BankIDAuthPage';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -12,13 +24,22 @@ import ApplicationPage from './pages/ApplicationPage';
 import HowItWorksPage from './pages/HowItWorksPage';
 import ContactPage from './pages/ContactPage';
 
+// Helper functions for managing redirect path in localStorage
+const setRedirectPath = (path: string) => {
+  localStorage.setItem('redirectPath', path);
+};
+
+const clearRedirectPath = () => {
+  localStorage.removeItem('redirectPath');
+};
+
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [users, setUsers] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
-  const handleLogin = (user) => {
+  const handleLogin = (user: any) => {
     setIsLoggedIn(true);
     setCurrentUser(user);
   };
@@ -30,26 +51,39 @@ function App() {
 
   const handleDeleteAccount = () => {
     if (currentUser) {
-      setUsers(prevUsers => prevUsers.filter(user => user.email !== currentUser.email));
+      setUsers((prevUsers) =>
+        prevUsers.filter((user) => user.email !== currentUser.email)
+      );
       handleLogout();
     }
   };
 
-  const handleUpdateUser = (updatedUser) => {
-    setUsers(prevUsers => {
-      // Check if the new email is already in use by another user
-      const emailExists = prevUsers.some(user => user.email === updatedUser.email && user.email !== currentUser.email);
+  const handleUpdateUser = (updatedUser: any) => {
+    setUsers((prevUsers) => {
+      const emailExists = prevUsers.some(
+        (user) =>
+          user.email === updatedUser.email && user.email !== currentUser.email
+      );
       if (emailExists) {
         alert('Denne e-postadressen er allerede i bruk.');
-        return prevUsers; // Do not update the users state
+        return prevUsers;
       } else {
-        // Update the user in the users state
-        return prevUsers.map(user =>
+        return prevUsers.map((user) =>
           user.email === updatedUser.email ? { ...updatedUser } : user
         );
       }
     });
     setCurrentUser(updatedUser);
+  };
+
+  // Protect routes that require authentication
+  const RequireAuth = ({ children }: { children: JSX.Element }) => {
+    const location = useLocation();
+    if (!isLoggedIn || !currentUser) {
+      setRedirectPath(location.pathname);
+      return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+    return children;
   };
 
   return (
@@ -62,22 +96,40 @@ function App() {
               <div className="flex items-center">
                 <Link to="/" className="flex items-center">
                   <CreditCard className="h-8 w-8 text-blue-600" />
-                  <span className="ml-2 text-xl font-bold text-gray-900">NorwayCredit</span>
+                  <span className="ml-2 text-xl font-bold text-gray-900">
+                    NorwayCredit
+                  </span>
                 </Link>
               </div>
-
               {/* Desktop Navigation */}
               <div className="hidden md:flex md:items-center md:space-x-8">
-                <Link to="/" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
+                <Link
+                  to="/"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
                   Hjem
                 </Link>
-                <Link to="/apply" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
+                <Link
+                  to="/apply"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                  onClick={() => {
+                    if (!isLoggedIn) {
+                      setRedirectPath('/apply');
+                    }
+                  }}
+                >
                   Søk Nå
                 </Link>
-                <Link to="/how-it-works" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
+                <Link
+                  to="/how-it-works"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
                   Hvordan Det Fungerer
                 </Link>
-                <Link to="/contact" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
+                <Link
+                  to="/contact"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
                   Kontakt
                 </Link>
                 {isLoggedIn && currentUser ? (
@@ -96,20 +148,22 @@ function App() {
                   </Link>
                 )}
               </div>
-
-              {/* Mobile menu button */}
+              {/* Mobile Menu Button */}
               <div className="md:hidden flex items-center">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
                 >
-                  {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                  {isMenuOpen ? (
+                    <X className="h-6 w-6" />
+                  ) : (
+                    <Menu className="h-6 w-6" />
+                  )}
                 </button>
               </div>
             </div>
           </div>
-
-          {/* Mobile menu */}
+          {/* Mobile Navigation */}
           {isMenuOpen && (
             <div className="md:hidden">
               <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
@@ -122,6 +176,11 @@ function App() {
                 <Link
                   to="/apply"
                   className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  onClick={() => {
+                    if (!isLoggedIn) {
+                      setRedirectPath('/apply');
+                    }
+                  }}
                 >
                   Søk Nå
                 </Link>
@@ -161,12 +220,59 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/apply" element={<ApplicationPage />} />
+            <Route
+              path="/login"
+              element={
+                <LoginPage
+                  onLogin={handleLogin}
+                  users={users}
+                  setUsers={setUsers}
+                />
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <RegisterPage setUsers={setUsers} onLogin={handleLogin} />
+              }
+            />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+            <Route
+              path="/bankid-login"
+              element={<BankIDLoginPage onLogin={handleLogin} />}
+            />
+            <Route
+              path="/bankid-privacy-policy"
+              element={<BankIDPrivacyPolicyPage />}
+            />
+            <Route
+              path="/bankid-auth"
+              element={<BankIDAuthPage onLogin={handleLogin} />}
+            />
+            <Route
+              path="/my-page"
+              element={
+                <RequireAuth>
+                  <MyPage
+                    onLogout={handleLogout}
+                    user={currentUser}
+                    onDeleteAccount={handleDeleteAccount}
+                    onUpdateUser={handleUpdateUser}
+                  />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/apply"
+              element={
+                <RequireAuth>
+                  <ApplicationPage user={currentUser} />
+                </RequireAuth>
+              }
+            />
             <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/contact" element={<ContactPage />} />
-            <Route path="/login" element={<LoginPage onLogin={handleLogin} users={users} setUsers={setUsers} />} />
-            <Route path="/register" element={<RegisterPage setUsers={setUsers} />} />
-            <Route path="/my-page" element={<MyPage onLogout={handleLogout} user={currentUser} onDeleteAccount={handleDeleteAccount} onUpdateUser={handleUpdateUser} />} />
           </Routes>
         </main>
 
@@ -177,58 +283,79 @@ function App() {
               <div>
                 <div className="flex items-center">
                   <CreditCard className="h-8 w-8 text-blue-600" />
-                  <span className="ml-2 text-xl font-bold text-gray-900">NorwayCredit</span>
+                  <span className="ml-2 text-xl font-bold text-gray-900">
+                    NorwayCredit
+                  </span>
                 </div>
                 <p className="mt-4 text-gray-600 text-sm">
                   Gjør kreditt tilgjengelig for internasjonale innbyggere i Norge.
                 </p>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">Produkter</h3>
+                <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">
+                  Produkter
+                </h3>
                 <ul className="mt-4 space-y-4">
                   <li>
-                    <Link to="/apply" className="text-base text-gray-600 hover:text-gray-900">
+                    <Link
+                      to="/apply"
+                      className="text-base text-gray-600 hover:text-gray-900"
+                    >
                       Personlige Lån
                     </Link>
                   </li>
                   <li>
-                    <Link to="/apply" className="text-base text-gray-600 hover:text-gray-900">
+                    <Link
+                      to="/apply"
+                      className="text-base text-gray-600 hover:text-gray-900"
+                    >
                       Kredittkort
                     </Link>
                   </li>
                 </ul>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">Støtte</h3>
+                <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">
+                  Støtte
+                </h3>
                 <ul className="mt-4 space-y-4">
                   <li>
-                    <Link to="/how-it-works" className="text-base text-gray-600 hover:text-gray-900">
+                    <Link
+                      to="/how-it-works"
+                      className="text-base text-gray-600 hover:text-gray-900"
+                    >
                       Hvordan Det Fungerer
                     </Link>
                   </li>
                   <li>
-                    <Link to="/contact" className="text-base text-gray-600 hover:text-gray-900">
+                    <Link
+                      to="/contact"
+                      className="text-base text-gray-600 hover:text-gray-900"
+                    >
                       Kontakt Oss
                     </Link>
                   </li>
                 </ul>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">Juridisk</h3>
+                <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">
+                  Juridisk
+                </h3>
                 <ul className="mt-4 space-y-4">
                   <li>
-                    <a href="#" className="text-base text-gray-600 hover:text-gray-900">
+                    <Link
+                      to="/privacy-policy"
+                      className="text-base text-gray-600 hover:text-gray-900"
+                    >
                       Personvernregler
-                    </a>
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-base text-gray-600 hover:text-gray-900">
+                    <Link
+                      to="/terms-of-service"
+                      className="text-base text-gray-600 hover:text-gray-900"
+                    >
                       Bruksvilkår
-                    </a>
-                  </li>
-                  <li>
-                     <Link to="/contact" className="text-base text-gray-600 hover:text-gray-900">
-                      Kontakt Oss
                     </Link>
                   </li>
                 </ul>
