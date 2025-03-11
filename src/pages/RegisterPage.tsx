@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
 interface User {
-  postAddress: string;
-  homeAddress: string;
-  birthNumber: string;
-  taxNumber: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
   countryCode: string;
@@ -18,10 +17,8 @@ interface RegisterPageProps {
 }
 
 const RegisterPage: React.FC<RegisterPageProps> = ({ setUsers, onLogin }) => {
-  const [postAddress, setPostAddress] = useState('');
-  const [homeAddress, setHomeAddress] = useState('');
-  const [birthNumber, setBirthNumber] = useState('');
-  const [taxNumber, setTaxNumber] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState('+47');
@@ -29,31 +26,28 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ setUsers, onLogin }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    setUsers((prevUsers) => {
-      if (prevUsers.find((user) => user.email === email)) {
-        alert('En bruker med denne e-postadressen eksisterer allerede.');
-        return prevUsers;
-      } else {
-        const newUser: User = {
-          postAddress,
-          homeAddress,
-          birthNumber,
-          taxNumber,
-          email,
-          phone,
-          countryCode,
-          password,
-        };
-        // Logg brukeren inn umiddelbart etter registrering
-        onLogin(newUser);
-        alert('Konto opprettet!');
-        navigate('/apply', { replace: true });
-        return [...prevUsers, newUser];
-      }
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          firstName: firstName,
+          lastName: lastName,
+          phone: phone,
+          countryCode: countryCode,
+        },
+      },
     });
+
+    if (error) {
+      alert(error.message);
+    } else {
+      alert('Konto opprettet! Vennligst bekreft e-postadressen din.');
+      navigate('/login', { replace: true });
+    }
   };
 
   return (
@@ -68,66 +62,37 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ setUsers, onLogin }) => {
           <input type="hidden" name="remember" value="true" />
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="postAddress" className="block text-sm font-medium text-gray-700">
-                Postadresse registrert i folkeregisteret (Skatteetaten)
+              <label htmlFor="firstName" className="sr-only">
+                Fornavn
               </label>
               <input
-                id="postAddress"
-                name="postAddress"
+                id="firstName"
+                name="firstName"
                 type="text"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Postadresse"
-                value={postAddress}
-                onChange={(e) => setPostAddress(e.target.value)}
+                placeholder="Fornavn"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
               />
             </div>
             <div>
-              <label htmlFor="homeAddress" className="block text-sm font-medium text-gray-700">
-                Din bostedsadresse i ditt hjemland
+              <label htmlFor="lastName" className="sr-only">
+                Etternavn
               </label>
               <input
-                id="homeAddress"
-                name="homeAddress"
+                id="lastName"
+                name="lastName"
                 type="text"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Adresse i hjemland"
-                value={homeAddress}
-                onChange={(e) => setHomeAddress(e.target.value)}
+                placeholder="Etternavn"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
               />
             </div>
             <div>
-              <label htmlFor="birthNumber" className="block text-sm font-medium text-gray-700">
-                Fødselsnummer eller d-nummer
-              </label>
-              <input
-                id="birthNumber"
-                name="birthNumber"
-                type="text"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="12345678912"
-                value={birthNumber}
-                onChange={(e) => setBirthNumber(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="taxNumber" className="block text-sm font-medium text-gray-700">
-                Skattenummer (TIN) fra hjemlandet ditt
-              </label>
-              <input
-                id="taxNumber"
-                name="taxNumber"
-                type="text"
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Skattenummer (TIN)"
-                value={taxNumber}
-                onChange={(e) => setTaxNumber(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="sr-only">
                 E-post
               </label>
               <input
@@ -143,7 +108,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ setUsers, onLogin }) => {
               />
             </div>
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="phone" className="sr-only">
                 Telefon
               </label>
               <div className="flex">
@@ -168,7 +133,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ setUsers, onLogin }) => {
               </div>
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="sr-only">
                 Passord
               </label>
               <input

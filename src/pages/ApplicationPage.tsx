@@ -22,23 +22,20 @@ const ApplicationPage = ({ user }) => {
   const [assessment, setAssessment] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const formatNumber = (number) => {
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  };
+
+  const removeSpaces = (numberString) => {
+    return numberString.replace(/\s/g, '');
+  };
+
   useEffect(() => {
     if (!user) {
       navigate('/login');
     } else {
       setFormData(prev => ({
         ...prev,
-        employmentStatus: '',
-        monthlyIncome: '',
-        globalIncome: '',
-        jobOffer: '',
-        education: '',
-        residencyStatus: '',
-        yearsInNorway: '',
-        debt: '',
-        paymentHistory: '',
-        norwegianSkills: '',
-        networkInNorway: '',
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
@@ -50,7 +47,18 @@ const ApplicationPage = ({ user }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    let formattedValue = value;
+
+    if (name === 'monthlyIncome' || name === 'globalIncome' || name === 'debt') {
+      const rawValue = removeSpaces(value);
+      if (!isNaN(Number(rawValue)) || rawValue === '') {
+        formattedValue = formatNumber(rawValue);
+      } else {
+        return;
+      }
+    }
+
+    setFormData(prev => ({ ...prev, [name]: formattedValue }));
   };
 
   const nextStep = () => setStep(prev => prev + 1);
@@ -69,11 +77,11 @@ const ApplicationPage = ({ user }) => {
         alder: 30, // You might want to add this to the form
         bosted: "Norway",
         jobbstatus: formData.employmentStatus,
-        norsk_inntekt: parseFloat(formData.monthlyIncome) || 0,
-        global_inntekt: parseFloat(formData.globalIncome) || 0,
+        norsk_inntekt: parseFloat(removeSpaces(formData.monthlyIncome)) || 0,
+        global_inntekt: parseFloat(removeSpaces(formData.globalIncome)) || 0,
         utdanning: formData.education,
         oppholdstid: formData.residencyStatus,
-        gjeld: parseFloat(formData.debt) || 0,
+        gjeld: parseFloat(removeSpaces(formData.debt)) || 0,
         betalingshistorikk: formData.paymentHistory,
         språkkunnskaper: formData.norwegianSkills,
         nettverk_i_norge: formData.networkInNorway,
@@ -139,7 +147,6 @@ const ApplicationPage = ({ user }) => {
             </div>
             <div className="flex justify-between mt-2">
               <span className="text-xs">Lånetype</span>
-              <span className="text-xs">Personlig Info</span>
               <span className="text-xs">Økonomisk Info</span>
               <span className="text-xs">Gjennomgang</span>
             </div>
@@ -171,7 +178,7 @@ const ApplicationPage = ({ user }) => {
                 onClick={nextStep}
                 disabled={!formData.loanType}
                 className="ml-auto flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed mt-4"
-              >
+                >
                 Neste
                 <ChevronRight className="h-5 w-5 ml-1" />
               </button>
@@ -196,28 +203,29 @@ const ApplicationPage = ({ user }) => {
                     <option value="egen bedrift">Egen bedrift</option>
                     <option value="deltid">Deltid</option>
                     <option value="student">Student</option>
+                    <option value="arbeidsledig">Arbeidsledig</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Månedlig Inntekt i Norge (NOK)</label>
                   <input
-                    type="number"
+                    type="text"
                     name="monthlyIncome"
                     value={formData.monthlyIncome}
                     onChange={handleInputChange}
                     className="mt-1 block w-full rounded-md border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm h-11 px-4"
-                    placeholder="50000"
+                    placeholder="10 000"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Global Månedlig Inntekt (NOK)</label>
                   <input
-                    type="number"
+                    type="text"
                     name="globalIncome"
                     value={formData.globalIncome}
                     onChange={handleInputChange}
                     className="mt-1 block w-full rounded-md border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm h-11 px-4"
-                    placeholder="0"
+                    placeholder="10 000"
                   />
                 </div>
                 {!isEmployed && (
@@ -268,12 +276,12 @@ const ApplicationPage = ({ user }) => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Total Gjeld (NOK)</label>
                   <input
-                    type="number"
+                    type="text"
                     name="debt"
                     value={formData.debt}
                     onChange={handleInputChange}
                     className="mt-1 block w-full rounded-md border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm h-11 px-4"
-                    placeholder="10000"
+                    placeholder="10 000"
                   />
                 </div>
                 <div>
@@ -318,6 +326,62 @@ const ApplicationPage = ({ user }) => {
                     <option value="familie">Familie</option>
                     <option value="profesjonelt nettverk">Profesjonelt nettverk</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Telefon</label>
+                  <div className="flex">
+                    <input
+                      type="text"
+                      name="countryCode"
+                      value={formData.countryCode}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-20 rounded-md border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm h-11 px-4"
+                      disabled
+                    />
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="mt-1 ml-2 block w-full rounded-md border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm h-11 px-4"
+                      disabled
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">E-post</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full rounded-md border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm h-11 px-4"
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Fornavn</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full rounded-md border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm h-11 px-4"
+                    placeholder="Ola"
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Etternavn</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full rounded-md border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm h-11 px-4"
+                    placeholder="Nordmann"
+                    disabled
+                  />
                 </div>
               </div>
               <div className="mt-8 flex justify-between">

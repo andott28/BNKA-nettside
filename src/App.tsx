@@ -17,6 +17,7 @@ import TermsOfServicePage from './pages/TermsOfServicePage';
 import BankIDLoginPage from './pages/BankIDLoginPage';
 import BankIDPrivacyPolicyPage from './pages/BankIDPrivacyPolicyPage';
 import BankIDAuthPage from './pages/BankIDAuthPage';
+import LoginWithoutBankIDPage from './pages/LoginWithoutBankIDPage';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -25,7 +26,7 @@ import HowItWorksPage from './pages/HowItWorksPage';
 import ContactPage from './pages/ContactPage';
 
 // Helper functions for managing redirect path in localStorage
-const setRedirectPath = (path: string) => {
+const setRedirectPath = (path) => {
   localStorage.setItem('redirectPath', path);
 };
 
@@ -77,14 +78,14 @@ function App() {
   };
 
   // Protect routes that require authentication
-  const RequireAuth = ({ children }: { children: JSX.Element }) => {
+  function RequireAuth({ children }: { children: JSX.Element }) {
     const location = useLocation();
     if (!isLoggedIn || !currentUser) {
       setRedirectPath(location.pathname);
       return <Navigate to="/login" state={{ from: location }} replace />;
     }
     return children;
-  };
+  }
 
   return (
     <Router>
@@ -249,6 +250,10 @@ function App() {
             <Route
               path="/bankid-auth"
               element={<BankIDAuthPage onLogin={handleLogin} />}
+            />
+            <Route
+              path="/login-without-bankid"
+              element={<LoginWithoutBankIDPage onLogin={handleLogin} users={users} />}
             />
             <Route
               path="/my-page"

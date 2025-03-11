@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { RotateCw } from 'lucide-react';
 import users from '../../users';
+import { supabase } from '../supabaseClient';
 
 const BankIDAuthPage = ({ onLogin }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [referenceWords, setReferenceWords] = useState('');
+  const birthNumber = location.state?.birthNumber;
 
   useEffect(() => {
     // Generate two random words (replace with a real word generation logic)
@@ -15,10 +18,10 @@ const BankIDAuthPage = ({ onLogin }) => {
     setReferenceWords(`${word1} ${word2}`);
   }, []);
 
-  const handleContinue = () => {
+  useEffect(() => {
     // Simulate successful BankID authentication and navigate to MyPage
     // Find the user with birthNumber "12345678912"
-    const andreas = users.find(user => user.birthNumber === '12345678912');
+    const andreas = users.find(user => user.birthNumber === birthNumber);
 
     if (andreas) {
       // Log in the user and navigate to MyPage
@@ -26,11 +29,11 @@ const BankIDAuthPage = ({ onLogin }) => {
       navigate('/my-page');
     } else {
       // Handle the case where the user is not found (e.g., display an error)
-      console.error('User with birthNumber 12345678912 not found.');
+      console.error(`User with birthNumber ${birthNumber} not found.`);
       alert('Bruker ikke funnet. Vennligst kontakt kundeservice.');
       navigate('/login');
     }
-  };
+  }, [navigate, onLogin, birthNumber]);
 
   const handleCancel = () => {
     navigate('/login');

@@ -1,16 +1,50 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
 const BankIDLoginPage = ({ onLogin }) => {
   const [birthNumber, setBirthNumber] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
-  const handleContinue = () => {
-    // In a real implementation, you would send the birth number to a server
-    // for BankID authentication. For this example, we'll just navigate to the BankIDAuthPage.
-    console.log("Remember me:", rememberMe); // Log the rememberMe value
-    navigate('/bankid-auth', { state: { birthNumber } });
+  const handleContinue = async () => {
+    // Call the Supabase function to verify the birth number
+    const { data, error } = await supabase.rpc('verify_birth_number', {
+      p_birth_number: birthNumber,
+    });
+
+    if (error) {
+      console.error('Error verifying birth number:', error);
+      setErrorMessage('Feil ved verifisering av fødselsnummer.');
+      return;
+    }
+
+    if (data) {
+      // Simulate successful BankID authentication and navigate to MyPage
+      // For demonstration purposes, we'll create a temporary email and password
+      const tempEmail = `temp-${birthNumber}@example.com`;
+      const tempPassword = 'temporarypassword';
+
+      // Sign in the user with the temporary credentials
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: tempEmail,
+        password: tempPassword,
+      });
+
+      if (authError) {
+        console.error('Error signing in with temporary credentials:', authError);
+        setErrorMessage('Feil ved innlogging. Vennligst prøv igjen.');
+        return;
+      }
+
+      // Call the onLogin function with the user object
+      onLogin(authData.user);
+      navigate('/my-page');
+    } else {
+      // Handle the case where the user is not found
+      setErrorMessage('Ugyldig fødselsnummer. Vennligst sjekk og prøv igjen.');
+    }
   };
 
   const handleCancel = () => {
@@ -26,6 +60,15 @@ const BankIDLoginPage = ({ onLogin }) => {
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={(e) => e.preventDefault()}>
+          {errorMessage && (
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-red-800">{errorMessage}</p>
+                </div>
+              </div>
+            </div>
+          )}
           <input type="hidden" name="remember" value="true" />
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
